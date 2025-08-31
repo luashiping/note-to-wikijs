@@ -1,0 +1,11 @@
+{
+  "id": "note-to-wikijs",
+  "name": "Note to Wiki.js",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "Upload your Obsidian notes to Wiki.js through GraphQL API",
+  "author": "Your Name",
+  "authorUrl": "https://github.com/yourusername/note-to-wikijs",
+  "fundingUrl": "https://buymeacoffee.com/yourusername",
+  "isDesktopOnly": false
+}
