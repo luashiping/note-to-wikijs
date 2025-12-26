@@ -2,12 +2,14 @@ import { App, Modal, Setting, TFile, Notice } from 'obsidian';
 import NoteToWikiJSPlugin from '../main';
 import { MarkdownProcessor } from './markdown-processor';
 import { WikiJSAPI } from './wikijs-api';
+import { ImageTagProcessor } from './image-tag-processor';
 
 export class UploadModal extends Modal {
 	plugin: NoteToWikiJSPlugin;
 	file: TFile;
 	private processor: MarkdownProcessor;
 	private api: WikiJSAPI;
+	private imageProcessor: ImageTagProcessor;
 	
 	// Form fields
 	private pathInput: string;
@@ -15,6 +17,7 @@ export class UploadModal extends Modal {
 	private tagsInput: string;
 	private descriptionInput: string;
 	private content: string;
+	private images: Array<{ name: string; path: string }>;
 
 	constructor(app: App, plugin: NoteToWikiJSPlugin, file: TFile) {
 		super(app);
@@ -22,6 +25,7 @@ export class UploadModal extends Modal {
 		this.file = file;
 		this.processor = new MarkdownProcessor(plugin.settings);
 		this.api = new WikiJSAPI(plugin.settings);
+		this.imageProcessor = new ImageTagProcessor(app);
 		
 		// Initialize form fields
 		this.initializeFields();
@@ -34,6 +38,7 @@ export class UploadModal extends Modal {
 		this.pathInput = this.processor.generatePath(this.file.name, this.file.parent?.path);
 		this.titleInput = processed.title;
 		this.content = processed.content;
+		this.images = processed.images;
 		this.tagsInput = this.processor.extractTags(content).join(', ');
 		this.descriptionInput = '';
 	}
@@ -98,6 +103,63 @@ export class UploadModal extends Modal {
 		contentEl.addClass('wikijs-upload-modal');
 	}
 
+	private async uploadImages(images: Array<{ name: string; path: string }>): Promise<Map<string, string>> {
+		const imageMap = new Map<string, string>();
+		
+		// 在上传图片前，先根据页面路径创建文件夹结构，并获取精确的文件夹 ID
+		let targetFolderId = 0;
+		try {
+			targetFolderId = await this.api.ensureAssetFolderPath(this.pathInput.trim());
+			console.log(`Asset folder prepared, folderId: ${targetFolderId}`);
+		} catch (error) {
+			console.warn('Failed to create asset folder structure:', error);
+			// 继续执行，使用根目录
+			targetFolderId = 0;
+		}
+		
+		// 使用 ImageTagProcessor 批量解析图片文件
+		const imageFileMap = this.imageProcessor.resolveImageFiles(images, this.file);
+		
+		for (const image of images) {
+			try {
+				console.log('Processing image:', image.name, 'Original path:', image.path);
+				
+				const file = imageFileMap.get(image.path);
+				
+				if (file instanceof TFile) {
+					console.log('Found file:', file.path);
+					const arrayBuffer = await this.app.vault.readBinary(file);
+					
+					// 上传图片到 Wiki.js，使用创建好的文件夹 ID
+					const uploadedPath = await this.api.uploadAsset(image.name, arrayBuffer, targetFolderId);
+					
+					// 保存原始路径到上传后路径的映射
+					imageMap.set(image.path, uploadedPath);
+					console.log(`Successfully uploaded: ${image.name} -> ${uploadedPath}`);
+				} else {
+					console.error(`File not found: ${image.name} (path: ${image.path})`);
+					new Notice(`Image file not found: ${image.name}`);
+				}
+			} catch (error) {
+				console.error(`Failed to upload image ${image.name}:`, error);
+				new Notice(`Failed to upload image ${image.name}: ${error.message}`);
+			}
+		}
+		
+		return imageMap;
+	}
+
+	private replaceImagePaths(content: string, imageMap: Map<string, string>): string {
+		let newContent = content;
+		for (const [oldPath, newPath] of imageMap) {
+			// 替换图片路径，处理可能的相对路径和绝对路径
+			const escapedOldPath = oldPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			const regex = new RegExp(`!\\[([^\\]]*)\\]\\(${escapedOldPath}\\)`, 'g');
+			newContent = newContent.replace(regex, `![$1](${newPath})`);
+		}
+		return newContent;
+	}
+
 	private async performUpload() {
 		// Validate inputs
 		if (!this.pathInput.trim()) {
@@ -115,6 +177,14 @@ export class UploadModal extends Modal {
 		uploadButton.disabled = true;
 
 		try {
+			// 首先上传所有图片
+			let processedContent = this.content;
+			if (this.images && this.images.length > 0) {
+				new Notice(`Uploading ${this.images.length} images...`);
+				const imageMap = await this.uploadImages(this.images);
+				processedContent = this.replaceImagePaths(this.content, imageMap);
+			}
+
 			// Check if page already exists
 			const existingPage = await this.checkIfPageExists();
 			
@@ -131,7 +201,7 @@ export class UploadModal extends Modal {
 					parseInt(existingPage.id),
 					this.pathInput.trim(),
 					this.titleInput.trim(),
-					this.content,
+					processedContent,
 					this.descriptionInput.trim() || undefined,
 					this.parseTags()
 				);
@@ -139,7 +209,7 @@ export class UploadModal extends Modal {
 				result = await this.api.createPage(
 					this.pathInput.trim(),
 					this.titleInput.trim(),
-					this.content,
+					processedContent,
 					this.descriptionInput.trim() || undefined,
 					this.parseTags()
 				);

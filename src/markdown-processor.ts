@@ -10,11 +10,17 @@ export class MarkdownProcessor {
 	/**
 	 * Convert Obsidian markdown to Wiki.js compatible markdown
 	 */
-	processMarkdown(content: string, fileName: string): { content: string; title: string } {
+	processMarkdown(content: string, fileName: string): { content: string; title: string; images: Array<{ name: string; path: string }> } {
 		let processedContent = content;
 
 		// Extract title from file name or first heading
 		let title = this.extractTitle(content, fileName);
+
+		// Extract images from original content before any modifications
+		const images = this.extractImages(content);
+		
+		// Debug log: Print extracted images
+		console.log('Extracted images:', JSON.stringify(images, null, 2));
 
 		if (!this.settings.preserveObsidianSyntax) {
 			// Convert Obsidian-specific syntax
@@ -32,7 +38,8 @@ export class MarkdownProcessor {
 
 		return {
 			content: processedContent.trim(),
-			title
+			title,
+			images
 		};
 	}
 
@@ -48,8 +55,12 @@ export class MarkdownProcessor {
 	}
 
 	private convertObsidianLinks(content: string): string {
-		// Convert [[Link]] to [Link](Link)
+		// Convert [[Link]] to [Link](Link), but ignore image links
 		return content.replace(/\[\[([^\]|]+)(\|([^\]]+))?\]\]/g, (match, link, pipe, displayText) => {
+			// Skip if this is an image link (ends with image extension)
+			if (/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(link)) {
+				return match;
+			}
 			const text = displayText || link;
 			const url = link.replace(/\s+/g, '-').toLowerCase();
 			return `[${text}](/${url})`;
@@ -169,4 +180,88 @@ export class MarkdownProcessor {
 		
 		return tags.filter(tag => tag.length > 0);
 	}
-}
+
+	/**
+	 * Extract images from markdown content
+	 */
+	private extractImages(content: string): Array<{ name: string; path: string }> {
+		const images: Array<{ name: string; path: string }> = [];
+		const imageSet = new Set<string>(); // 用于去重
+
+		// 匹配所有可能的图片格式
+		const patterns = [
+			// 标准 Markdown
+			/!\[([^\]]*)\]\(([^)]+)\)/g,
+			// Obsidian 格式
+			/!\[\[([^\]|]+)(\.[^\]]*)\]\]/g,
+			// Obsidian 带标题格式
+			/!\[\[([^\]|]+)\|([^\]]+)\]\]/g,
+			// HTML <img> 标签
+			/<img[^>]+src=["']([^"']+)["'][^>]*>/g
+		];
+
+		for (const pattern of patterns) {
+			let match;
+			while ((match = pattern.exec(content)) !== null) {
+				// 获取图片路径（根据不同格式，路径可能在不同的捕获组中）
+				let path = match[1];
+				if (pattern.source.includes('!\\[\\[')) {
+					// Obsidian 格式，路径在第一个捕获组
+					path = match[1];
+				} else if (pattern.source.includes('img')) {
+					// HTML 格式，路径在第一个捕获组
+					path = match[1];
+				} else {
+					// 标准 Markdown 格式，路径在第二个捕获组
+					path = match[2];
+				}
+
+				// 跳过外部链接
+				if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+					continue;
+				}
+
+				// 处理路径
+				path = this.normalizeImagePath(path);
+				
+				// 去重处理
+				if (imageSet.has(path)) {
+					continue;
+				}
+				imageSet.add(path);
+
+				// 获取文件名
+				const fileName = path.split('/').pop() || path;
+				
+				images.push({
+					name: fileName,
+					path: path
+				});
+			}
+		}
+
+		return images;
+	}
+
+	/**
+	 * 规范化图片路径
+	 */
+	private normalizeImagePath(path: string): string {
+		// 移除路径中的空格和特殊字符
+		path = path.trim();
+		
+		// 处理 Windows 路径分隔符
+		path = path.replace(/\\/g, '/');
+		
+		// 移除开头的斜杠
+		path = path.startsWith('/') ? path.substring(1) : path;
+		
+		// 处理相对路径 (./ 或 ../)
+		path = path.replace(/^\.\//, '');
+		
+		// 移除查询参数和哈希
+		path = path.split('?')[0].split('#')[0];
+		
+		return path;
+	}
+	}
