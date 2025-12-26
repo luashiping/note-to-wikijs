@@ -127,15 +127,15 @@ export class UploadModal extends Modal {
 				const file = imageFileMap.get(image.path);
 				
 				if (file instanceof TFile) {
-					console.log('Found file:', file.path);
+					console.log('Found file:', file.path, 'File name:', file.name);
 					const arrayBuffer = await this.app.vault.readBinary(file);
 					
-					// 上传图片到 Wiki.js，使用创建好的文件夹 ID
-					const uploadedPath = await this.api.uploadAsset(image.name, arrayBuffer, targetFolderId);
+					// 上传图片到 Wiki.js，使用实际文件的完整文件名（包含扩展名）
+					const uploadedPath = await this.api.uploadAsset(file.name, arrayBuffer, targetFolderId);
 					
 					// 保存原始路径到上传后路径的映射
 					imageMap.set(image.path, uploadedPath);
-					console.log(`Successfully uploaded: ${image.name} -> ${uploadedPath}`);
+					console.log(`Successfully uploaded: ${file.name} -> ${uploadedPath}`);
 				} else {
 					console.error(`File not found: ${image.name} (path: ${image.path})`);
 					new Notice(`Image file not found: ${image.name}`);

@@ -425,16 +425,32 @@ export class WikiJSAPI {
 					'gif': 'image/gif',
 					'webp': 'image/webp',
 					'svg': 'image/svg+xml',
-					'bmp': 'image/bmp'
+					'bmp': 'image/bmp',
+					'ico': 'image/x-icon',
+					'tiff': 'image/tiff',
+					'tif': 'image/tiff',
+					'avif': 'image/avif',
+					'heic': 'image/heic',
+					'heif': 'image/heif'
 				};
 				return mimeTypes[ext] || 'application/octet-stream';
 			};
 			
+			// 确保文件名包含扩展名
+			const sanitizedFileName = fileName.trim();
+			if (!sanitizedFileName) {
+				throw new Error('File name cannot be empty');
+			}
+			
 			// 添加文件数据
-			const blob = new Blob([fileContent], { type: getContentType(fileName) });
-			formData.append('mediaUpload', blob, fileName);
+			const contentType = getContentType(sanitizedFileName);
+			const blob = new Blob([fileContent], { type: contentType });
+			formData.append('mediaUpload', blob, sanitizedFileName);
 
-			console.log(`Uploading asset: ${fileName} to folder ${folderId} (${blob.size} bytes, ${blob.type})`);
+			console.log(`Uploading asset: ${sanitizedFileName} to folder ${folderId}`);
+			console.log(`  - Size: ${blob.size} bytes`);
+			console.log(`  - MIME type: ${blob.type}`);
+			console.log(`  - File extension: ${sanitizedFileName.split('.').pop()}`);
 
 			// 发送请求
 			const response = await fetch(`${this.settings.wikiUrl}/u`, {
