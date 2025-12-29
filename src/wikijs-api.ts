@@ -463,27 +463,25 @@ export class WikiJSAPI {
 				body: formData
 			});
 
+			
 			if (!response.ok) {
 				const errorText = await response.text();
 				console.error(`Upload failed: ${response.status} - ${errorText}`);
 				throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
 			}
 
-			const result = await response.json();
-			console.log('Upload response:', result);
-			
-			if (!result.succeeded) {
-				throw new Error(result.message || 'Upload failed');
-			}
+		// const result = await response.json();
+		// console.log('Upload response:', result);
+		
+		// if (!result.succeeded) {
+		// 	throw new Error(result.message || 'Upload failed');
+		// }
 
-			// 返回上传后的文件路径
-			if (!result.url && !result.path) {
-				throw new Error('No file path returned from server');
-			}
-
-			const uploadedPath = result.url || result.path;
-			console.log(`Asset uploaded successfully: ${uploadedPath}`);
-			return uploadedPath;
+		// 图片上传成功，输出文件名
+		console.log(`✅ Asset uploaded successfully: ${sanitizedFileName}`);
+		
+		// 返回文件名（用于后续在 markdown 中替换引用）
+		return sanitizedFileName;
 
 		} catch (error) {
 			console.error('Asset upload error:', error);

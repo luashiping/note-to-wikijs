@@ -131,11 +131,11 @@ export class UploadModal extends Modal {
 					const arrayBuffer = await this.app.vault.readBinary(file);
 					
 					// 上传图片到 Wiki.js，使用实际文件的完整文件名（包含扩展名）
-					const uploadedPath = await this.api.uploadAsset(file.name, arrayBuffer, targetFolderId);
+					const uploadedFileName = await this.api.uploadAsset(file.name, arrayBuffer, targetFolderId);
 					
-					// 保存原始路径到上传后路径的映射
-					imageMap.set(image.path, uploadedPath);
-					console.log(`Successfully uploaded: ${file.name} -> ${uploadedPath}`);
+					// 上传成功，显示提示
+					new Notice(`✅ ${file.name} uploaded successfully`);
+					console.log(`✅ Successfully uploaded: ${file.name}`);
 				} else {
 					console.error(`File not found: ${image.name} (path: ${image.path})`);
 					new Notice(`Image file not found: ${image.name}`);
@@ -146,6 +146,7 @@ export class UploadModal extends Modal {
 			}
 		}
 		
+		// 返回空的映射，因为不需要替换路径
 		return imageMap;
 	}
 
@@ -181,8 +182,8 @@ export class UploadModal extends Modal {
 			let processedContent = this.content;
 			if (this.images && this.images.length > 0) {
 				new Notice(`Uploading ${this.images.length} images...`);
-				const imageMap = await this.uploadImages(this.images);
-				processedContent = this.replaceImagePaths(this.content, imageMap);
+				await this.uploadImages(this.images);
+				// 不替换图片路径，保持原样
 			}
 
 			// Check if page already exists
