@@ -366,8 +366,8 @@ class BulkUploadModal extends Modal {
 			
 			try {
 				const content = await this.app.vault.read(file);
-				const processed = processor.processMarkdown(content, file.name);
 				const path = processor.generatePath(file.name, file.parent?.path);
+				const processed = processor.processMarkdown(content, file.name, path);
 				const tags = processor.extractTags(content);
 
 				// Check if page exists

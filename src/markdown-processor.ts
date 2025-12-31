@@ -10,7 +10,7 @@ export class MarkdownProcessor {
 	/**
 	 * Convert Obsidian markdown to Wiki.js compatible markdown
 	 */
-	processMarkdown(content: string, fileName: string): { content: string; title: string; images: Array<{ name: string; path: string }> } {
+	processMarkdown(content: string, fileName: string, pagePath?: string): { content: string; title: string; images: Array<{ name: string; path: string }> } {
 		let processedContent = content;
 
 		// Extract title from file name or first heading
@@ -25,6 +25,8 @@ export class MarkdownProcessor {
 		if (!this.settings.preserveObsidianSyntax) {
 			// Convert Obsidian-specific syntax
 			processedContent = this.convertObsidianLinks(processedContent);
+			console.log('Processed pagePath:', pagePath);
+			processedContent = this.convertObsidianImages(processedContent, pagePath);
 			processedContent = this.convertObsidianTags(processedContent);
 			processedContent = this.convertObsidianCallouts(processedContent);
 		}
@@ -58,12 +60,55 @@ export class MarkdownProcessor {
 		// Convert [[Link]] to [Link](Link), but ignore image links
 		return content.replace(/\[\[([^\]|]+)(\|([^\]]+))?\]\]/g, (match, link, pipe, displayText) => {
 			// Skip if this is an image link (ends with image extension)
-			if (/\.(png|jpg|jpeg|gif|svg|webp)$/i.test(link)) {
+			if (/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|tif|avif|heic|heif)$/i.test(link)) {
 				return match;
 			}
 			const text = displayText || link;
 			const url = link.replace(/\s+/g, '-').toLowerCase();
 			return `[${text}](/${url})`;
+		});
+	}
+
+	private convertObsidianImages(content: string, pagePath?: string): string {
+		// Convert Obsidian image format ![[image.png]] to Wiki.js format ![image.png](/path/image.png)
+		return content.replace(/!\[\[([^\]|]+?)(\|([^\]]+))?\]\]/g, (match, imageName, pipe, displayText) => {
+			// 只处理图片文件（有图片扩展名的）
+			if (!/\.(png|jpg|jpeg|gif|svg|webp|bmp|ico|tiff|tif|avif|heic|heif)$/i.test(imageName)) {
+				return match;
+			}
+
+			// 提取纯文件名（去除路径）
+			const fileName = imageName.split('/').pop()?.trim() || imageName.trim();
+			
+		// 构建图片在 Wiki.js 中的路径
+		// 如果提供了页面路径，则将图片放在同一路径下
+		let imageUrl = '';
+		if (pagePath) {
+			// 去除前导斜杠
+			let cleanPath = pagePath.startsWith('/') ? pagePath.substring(1) : pagePath;
+			
+			// 提取父目录路径，去掉最后的页面名称
+			// 例如：notes/coco/m -> notes/coco
+			const pathParts = cleanPath.split('/');
+			if (pathParts.length > 1) {
+				// 去掉最后一部分（页面名称）
+				pathParts.pop();
+				cleanPath = pathParts.join('/');
+			} else {
+				// 如果只有一级路径，图片放在根目录
+				cleanPath = '';
+			}
+			
+			imageUrl = cleanPath ? `/${cleanPath}/${fileName}` : `/${fileName}`;
+		} else {
+			// 如果没有页面路径，放在根目录
+			imageUrl = `/${fileName}`;
+		}
+
+			// 使用显示文本（如果有）或完整文件名作为 alt text
+			const altText = displayText || fileName;
+			
+			return `![${altText}](${imageUrl})`;
 		});
 	}
 

@@ -33,11 +33,15 @@ export class UploadModal extends Modal {
 
 	private async initializeFields() {
 		const content = await this.app.vault.read(this.file);
+		
+		// 先生成页面路径
+		this.pathInput = this.processor.generatePath(this.file.name, this.file.parent?.path);
+		
+		// 初始处理 markdown 内容（不传入 pagePath，因为用户可能会修改路径）
 		const processed = this.processor.processMarkdown(content, this.file.name);
 		
-		this.pathInput = this.processor.generatePath(this.file.name, this.file.parent?.path);
 		this.titleInput = processed.title;
-		this.content = processed.content;
+		this.content = content; // 保存原始内容，在上传时根据最终路径重新处理
 		this.images = processed.images;
 		this.tagsInput = this.processor.extractTags(content).join(', ');
 		this.descriptionInput = '';
@@ -190,8 +194,13 @@ export class UploadModal extends Modal {
 			}
 		}
 
+		// 使用用户最终确认的路径重新处理 markdown 内容
+		// 这样可以确保图片路径使用正确的 Wiki.js 路径
+		console.log('Processing markdown with final path:', this.pathInput.trim());
+		const finalProcessed = this.processor.processMarkdown(this.content, this.file.name, this.pathInput.trim());
+		const processedContent = finalProcessed.content;
+
 		// 首先上传所有图片
-		let processedContent = this.content;
 		if (this.images && this.images.length > 0) {
 			new Notice(`Uploading ${this.images.length} images...`);
 			await this.uploadImages(this.images);
