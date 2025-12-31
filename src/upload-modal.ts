@@ -177,44 +177,46 @@ export class UploadModal extends Modal {
 		uploadButton.textContent = 'Uploading...';
 		uploadButton.disabled = true;
 
-		try {
-			// 首先上传所有图片
-			let processedContent = this.content;
-			if (this.images && this.images.length > 0) {
-				new Notice(`Uploading ${this.images.length} images...`);
-				await this.uploadImages(this.images);
-				// 不替换图片路径，保持原样
+	try {
+		// Check if page already exists before uploading images
+		const existingPage = await this.checkIfPageExists();
+		console.log('Existing page:', existingPage);
+		if (existingPage) {
+			const shouldUpdate = await this.confirmUpdate(existingPage);
+			if (!shouldUpdate) {
+				uploadButton.textContent = 'Upload';
+				uploadButton.disabled = false;
+				return;
 			}
+		}
 
-			// Check if page already exists
-			const existingPage = await this.checkIfPageExists();
-			
-			let result;
-			if (existingPage) {
-				const shouldUpdate = await this.confirmUpdate(existingPage);
-				if (!shouldUpdate) {
-					uploadButton.textContent = 'Upload';
-					uploadButton.disabled = false;
-					return;
-				}
-				
-				result = await this.api.updatePage(
-					parseInt(existingPage.id),
-					this.pathInput.trim(),
-					this.titleInput.trim(),
-					processedContent,
-					this.descriptionInput.trim() || undefined,
-					this.parseTags()
-				);
-			} else {
-				result = await this.api.createPage(
-					this.pathInput.trim(),
-					this.titleInput.trim(),
-					processedContent,
-					this.descriptionInput.trim() || undefined,
-					this.parseTags()
-				);
-			}
+		// 首先上传所有图片
+		let processedContent = this.content;
+		if (this.images && this.images.length > 0) {
+			new Notice(`Uploading ${this.images.length} images...`);
+			await this.uploadImages(this.images);
+			// 不替换图片路径，保持原样
+		}
+		
+		let result;
+		if (existingPage) {
+			result = await this.api.updatePage(
+				parseInt(existingPage.id),
+				this.pathInput.trim(),
+				this.titleInput.trim(),
+				processedContent,
+				this.descriptionInput.trim() || undefined,
+				this.parseTags()
+			);
+		} else {
+			result = await this.api.createPage(
+				this.pathInput.trim(),
+				this.titleInput.trim(),
+				processedContent,
+				this.descriptionInput.trim() || undefined,
+				this.parseTags()
+			);
+		}
 
 			if (result.success) {
 				new Notice(`Successfully ${existingPage ? 'updated' : 'created'} page: ${result.pageUrl}`);
@@ -233,6 +235,7 @@ export class UploadModal extends Modal {
 
 	private async checkIfPageExists(): Promise<any> {
 		try {
+			console.log('Checking if page exists at path:', this.pathInput.trim());
 			const page = await this.api.getPageByPath(this.pathInput.trim());
 			return page; // 如果页面不存在，getPageByPath 会返回 null
 			// return await this.api.getPageByPath(this.pathInput.trim());

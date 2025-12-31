@@ -74,6 +74,9 @@ export class WikiJSAPI {
 	}
 
 	async getPageByPath(path: string): Promise<any> {
+		// 去掉路径最前面的 /
+		const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+		
 		const query = `
 			query($path: String!) {
 				pages {
@@ -89,11 +92,11 @@ export class WikiJSAPI {
 				}
 			}
 		`;
-		const result = await this.makeGraphQLRequest(query, { path: path });
+		const result = await this.makeGraphQLRequest(query, { path: normalizedPath });
 		// return result.pages.single;
 		// 在搜索结果中查找完全匹配的 path
 		const exactMatch = result.pages.search.results.find(
-			(page: any) => page.path === path
+			(page: any) => page.path === normalizedPath
 		);
 
 		return exactMatch || null;
@@ -193,6 +196,9 @@ export class WikiJSAPI {
 		description?: string,
 		tags?: string[]
 	): Promise<UploadResult> {
+		// 去掉路径最前面的 /
+		const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
+		
 		const mutation = `
 			mutation($id: Int!, $path: String!, $title: String!, $content: String!, $description: String, $tags: [String!]) {
 				pages {
@@ -229,7 +235,7 @@ export class WikiJSAPI {
 		try {
 			const variables = {
 				id,
-				path,
+				path: normalizedPath,
 				title,
 				// content: content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n'),
 				content,
@@ -244,7 +250,7 @@ export class WikiJSAPI {
 					success: true,
 					message: 'Page updated successfully',
 					pageId: result.pages.update.page.id,
-					pageUrl: `${this.settings.wikiUrl}/${path}`
+					pageUrl: `${this.settings.wikiUrl}/${normalizedPath}`
 				};
 			} else {
 				return {
