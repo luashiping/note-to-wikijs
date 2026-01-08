@@ -77,33 +77,39 @@ export class MarkdownProcessor {
 				return match;
 			}
 
-			// 提取纯文件名（去除路径）
-			const fileName = imageName.split('/').pop()?.trim() || imageName.trim();
+		// 提取纯文件名（去除路径）
+		let fileName = imageName.split('/').pop()?.trim() || imageName.trim();
+		
+		// Wiki.js 会对文件名进行以下转换，这里需要做同样的处理：
+		// 1. 将空格转换为下划线（连续空格合并为一个下划线）
+		fileName = fileName.replace(/\s+/g, '_');
+		// 2. 将大写字母转换为小写字母
+		fileName = fileName.toLowerCase();
 			
-		// 构建图片在 Wiki.js 中的路径
-		// 如果提供了页面路径，则将图片放在同一路径下
-		let imageUrl = '';
-		if (pagePath) {
-			// 去除前导斜杠
-			let cleanPath = pagePath.startsWith('/') ? pagePath.substring(1) : pagePath;
-			
-			// 提取父目录路径，去掉最后的页面名称
-			// 例如：notes/coco/m -> notes/coco
-			const pathParts = cleanPath.split('/');
-			if (pathParts.length > 1) {
-				// 去掉最后一部分（页面名称）
-				pathParts.pop();
-				cleanPath = pathParts.join('/');
+			// 构建图片在 Wiki.js 中的路径
+			// 如果提供了页面路径，则将图片放在同一路径下
+			let imageUrl = '';
+			if (pagePath) {
+				// 去除前导斜杠
+				let cleanPath = pagePath.startsWith('/') ? pagePath.substring(1) : pagePath;
+				
+				// 提取父目录路径，去掉最后的页面名称
+				// 例如：notes/coco/m -> notes/coco
+				const pathParts = cleanPath.split('/');
+				if (pathParts.length > 1) {
+					// 去掉最后一部分（页面名称）
+					pathParts.pop();
+					cleanPath = pathParts.join('/');
+				} else {
+					// 如果只有一级路径，图片放在根目录
+					cleanPath = '';
+				}
+				
+				imageUrl = cleanPath ? `/${cleanPath}/${fileName}` : `/${fileName}`;
 			} else {
-				// 如果只有一级路径，图片放在根目录
-				cleanPath = '';
+				// 如果没有页面路径，放在根目录
+				imageUrl = `/${fileName}`;
 			}
-			
-			imageUrl = cleanPath ? `/${cleanPath}/${fileName}` : `/${fileName}`;
-		} else {
-			// 如果没有页面路径，放在根目录
-			imageUrl = `/${fileName}`;
-		}
 
 			// 使用显示文本（如果有）或完整文件名作为 alt text
 			const altText = displayText || fileName;
