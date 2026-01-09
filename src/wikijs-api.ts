@@ -357,25 +357,19 @@ export class WikiJSAPI {
 
 	/**
 	 * 根据路径创建文件夹结构
-	 * @param path 页面路径（如 "folder1/folder2/page"）
+	 * @param path 完整路径（如 "folder1/folder2/folder3"），将使用所有部分创建文件夹
 	 * @returns 最终文件夹 ID
 	 */
 	async ensureAssetFolderPath(path: string): Promise<number> {
-		// 从路径中提取文件夹部分
-		const parts = path.split('/').filter(p => p.trim());
-		if (parts.length === 0) {
-			return 0; // 根目录
-		}
-
-		// 移除最后一个部分（页面名称），只保留文件夹路径
-		const folderParts = parts.slice(0, -1);
+		// 从路径中提取所有文件夹部分，保留完整路径
+		const folderParts = path.split('/').filter(p => p.trim());
 		if (folderParts.length === 0) {
-			return 0; // 页面在根目录
+			return 0; // 根目录
 		}
 
 		let currentFolderId = 0;
 		
-		// 逐级创建文件夹
+		// 逐级创建文件夹，使用完整路径的所有部分
 		for (const folderName of folderParts) {
 			// 首先检查文件夹是否已存在
 			let folderId = await this.findFolderIdByName(currentFolderId, folderName);
