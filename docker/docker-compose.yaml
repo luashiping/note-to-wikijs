@@ -1,0 +1,49 @@
+services:
+  openresty:
+     image: openresty/openresty:1.19.3.1-centos7
+     volumes:
+       - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+     ports:
+       - 80:80
+     depends_on:
+       - wiki
+     networks:
+       - wiki-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: wiki
+      POSTGRES_PASSWORD: wikijsrocks
+      POSTGRES_USER: wikijs
+    logging:
+      driver: none
+    restart: unless-stopped
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - wiki-network
+
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    depends_on:
+      - db
+    environment:
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: wikijs
+      DB_PASS: wikijsrocks
+      DB_NAME: wiki
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - wiki-network
+
+volumes:
+  db-data:
+
+networks:
+  wiki-network:
+    driver: bridge
