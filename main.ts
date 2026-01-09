@@ -35,14 +35,15 @@ export default class NoteToWikiJSPlugin extends Plugin {
 			}
 		});
 
-		// Add command to bulk upload files
-		this.addCommand({
-			id: 'bulk-upload-to-wikijs',
-			name: 'Bulk upload folder to Wiki.js',
-			callback: () => {
-				this.bulkUploadFolder();
-			}
-		});
+	// Add command to bulk upload files
+	// TODO: Re-enable after adding image upload support for bulk upload
+	// this.addCommand({
+	// 	id: 'bulk-upload-to-wikijs',
+	// 	name: 'Bulk upload folder to Wiki.js',
+	// 	callback: () => {
+	// 		this.bulkUploadFolder();
+	// 	}
+	// });
 
 		// Add context menu item for files
 		this.registerEvent(
@@ -139,35 +140,36 @@ export default class NoteToWikiJSPlugin extends Plugin {
 		modal.open();
 	}
 
-	private async bulkUploadFolder() {
-		const folders = this.app.vault.getAllLoadedFiles()
-			.filter(file => 'children' in file)
-			.map(folder => folder.path);
+	// TODO: Re-enable bulk upload after adding image upload support
+	// private async bulkUploadFolder() {
+	// 	const folders = this.app.vault.getAllLoadedFiles()
+	// 		.filter(file => 'children' in file)
+	// 		.map(folder => folder.path);
 
-		if (folders.length === 0) {
-			this.showNotice('No folders found in vault');
-			return;
-		}
+	// 	if (folders.length === 0) {
+	// 		this.showNotice('No folders found in vault');
+	// 		return;
+	// 	}
 
-		// Create folder selection modal
-		const modal = new FolderSelectionModal(this.app, folders, async (folderPath) => {
-			await this.uploadFolderContents(folderPath);
-		});
-		modal.open();
-	}
+	// 	// Create folder selection modal
+	// 	const modal = new FolderSelectionModal(this.app, folders, async (folderPath) => {
+	// 		await this.uploadFolderContents(folderPath);
+	// 	});
+	// 	modal.open();
+	// }
 
-	private async uploadFolderContents(folderPath: string) {
-		const files = this.app.vault.getMarkdownFiles()
-			.filter(file => file.path.startsWith(folderPath));
+	// private async uploadFolderContents(folderPath: string) {
+	// 	const files = this.app.vault.getMarkdownFiles()
+	// 		.filter(file => file.path.startsWith(folderPath));
 
-		if (files.length === 0) {
-			this.showNotice(`No markdown files found in folder: ${folderPath}`);
-			return;
-		}
+	// 	if (files.length === 0) {
+	// 		this.showNotice(`No markdown files found in folder: ${folderPath}`);
+	// 		return;
+	// 	}
 
-		const modal = new BulkUploadModal(this.app, this, files);
-		modal.open();
-	}
+	// 	const modal = new BulkUploadModal(this.app, this, files);
+	// 	modal.open();
+	// }
 }
 
 // File Selection Modal
@@ -217,6 +219,7 @@ class FileSelectionModal extends Modal {
 	}
 }
 
+// TODO: Re-enable after adding image upload support for bulk upload
 // Folder Selection Modal
 class FolderSelectionModal extends Modal {
 	folders: string[];
@@ -263,6 +266,7 @@ class FolderSelectionModal extends Modal {
 	}
 }
 
+// TODO: Re-enable after adding image upload support for bulk upload
 // Bulk Upload Modal
 class BulkUploadModal extends Modal {
 	plugin: NoteToWikiJSPlugin;

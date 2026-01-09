@@ -5,7 +5,7 @@ An Obsidian plugin that allows you to upload your notes to Wiki.js through its G
 ## Features
 
 - 📤 Upload individual notes to Wiki.js
-- 📁 Bulk upload entire folders
+- 🖼️ Automatic image upload to Wiki.js assets
 - 🔄 Automatic conversion of Obsidian syntax to Wiki.js compatible markdown
 - 🏷️ Support for tags and metadata
 - ⚙️ Configurable upload behavior (create new, update existing, or ask)
@@ -65,12 +65,6 @@ OR
 
 1. Use the command palette and search for "Upload file to Wiki.js"
 2. Select the file from the list
-
-### Bulk Upload
-
-1. Use the command palette and search for "Bulk upload folder to Wiki.js"
-2. Select the folder you want to upload
-3. Review the list of files and start the bulk upload
 
 ## Markdown Conversion
 
@@ -132,6 +126,18 @@ Ensure your Wiki.js API token has the following permissions:
 2. If you want to preserve Obsidian syntax, enable "Preserve Obsidian Syntax"
 3. Review the content preview in the upload modal before uploading
 
+## Roadmap
+
+Future features planned for development:
+
+- 📁 **Bulk Upload Folder** - Upload entire folders with all files and images at once
+- 🔄 **Incremental Sync** - Only upload changed files
+- 📊 **Upload History** - Track uploaded files and their status
+- 🎨 **Image Optimization** - Compress images before uploading
+- 📝 **Conflict Resolution** - Better handling of conflicting changes
+- 🔍 **Search & Replace** - Batch find and replace before uploading
+- 📦 **Export Presets** - Save and reuse upload configurations
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -145,8 +151,9 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ### 1.0.0
 
 - Initial release
-- Basic upload functionality
+- Single file upload functionality
+- Automatic image upload to Wiki.js assets
 - Markdown conversion
-- Bulk upload support
+- Page overwrite confirmation
 - Settings configuration
 - Context menu integration
