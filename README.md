@@ -2,6 +2,8 @@
 
 An Obsidian plugin that allows you to upload your notes to Wiki.js through its GraphQL API.
 
+English | [简体中文](README.zh-CN.md)
+
 ## Features
 
 - 📤 Upload individual notes to Wiki.js
@@ -131,12 +133,6 @@ Ensure your Wiki.js API token has the following permissions:
 Future features planned for development:
 
 - 📁 **Bulk Upload Folder** - Upload entire folders with all files and images at once
-- 🔄 **Incremental Sync** - Only upload changed files
-- 📊 **Upload History** - Track uploaded files and their status
-- 🎨 **Image Optimization** - Compress images before uploading
-- 📝 **Conflict Resolution** - Better handling of conflicting changes
-- 🔍 **Search & Replace** - Batch find and replace before uploading
-- 📦 **Export Presets** - Save and reuse upload configurations
 
 ## Contributing
 
