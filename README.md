@@ -1,6 +1,6 @@
 # Note to Wiki.js
 
-An Obsidian plugin that allows you to upload your notes to Wiki.js through its GraphQL API.
+An Obsidian plugin that allows you to Upload your Obsidian notes to Wiki.js through GraphQL API.
 
 English | [简体中文](README.zh-CN.md)
 
