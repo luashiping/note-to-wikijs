@@ -1,7 +1,6 @@
 export interface WikiJSSettings {
 	wikiUrl: string;
 	apiToken: string;
-	defaultTags: string[];
 	autoConvertLinks: boolean;
 	preserveObsidianSyntax: boolean;
 	uploadBehavior?: 'ask' | 'update' | 'create-new';

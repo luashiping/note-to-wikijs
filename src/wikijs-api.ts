@@ -171,7 +171,7 @@ export class WikiJSAPI {
 				publishStartDate: '',
 				scriptCss: "",
 				scriptJs: "",
-				tags: (tags || this.settings.defaultTags || []).filter(tag => tag && tag.trim()),
+				tags: (tags || []).filter(tag => tag && tag.trim()),
 				title
 			};
 
@@ -250,7 +250,7 @@ export class WikiJSAPI {
 				// content: content.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n'),
 				content,
 				description: description || '',
-				tags: tags || this.settings.defaultTags || []
+				tags: tags || []
 			};
 
 			const result = await this.makeGraphQLRequest(mutation, variables) as WikiJSUpdatePageMutation;

@@ -6,7 +6,6 @@ import { WikiJSSettings } from './types';
 export const DEFAULT_SETTINGS: WikiJSSettings = {
 	wikiUrl: '',
 	apiToken: '',
-	defaultTags: [],
 	autoConvertLinks: true,
 	preserveObsidianSyntax: false,
 };
@@ -85,20 +84,6 @@ export class WikiJSSettingTab extends PluginSettingTab {
 						button.setButtonText('Test connection');
 						button.setDisabled(false);
 					}, 3000);
-				}));
-
-		new Setting(containerEl)
-			.setName('Default tags')
-			.setDesc('Default tags to add to uploaded pages (comma-separated)')
-			.addText(text => text
-				.setPlaceholder('tag1, tag2, tag3')
-				.setValue(this.plugin.settings.defaultTags.join(', '))
-				.onChange(async (value) => {
-					this.plugin.settings.defaultTags = value
-						.split(',')
-						.map(tag => tag.trim())
-						.filter(tag => tag.length > 0);
-					await this.plugin.saveSettings();
 				}));
 
 		new Setting(containerEl)
