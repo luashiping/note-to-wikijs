@@ -3,6 +3,7 @@ import NoteToWikiJSPlugin from '../main';
 import { MarkdownProcessor } from './markdown-processor';
 import { WikiJSAPI } from './wikijs-api';
 import { ImageTagProcessor } from './image-tag-processor';
+import { WikiJSPage } from './types';
 
 export class UploadModal extends Modal {
 	plugin: NoteToWikiJSPlugin;
@@ -51,7 +52,7 @@ export class UploadModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: 'Upload to Wiki.jssss' });
+		contentEl.createEl('h2', { text: 'Upload to Wiki.js' });
 
 		// File info
 		const fileInfoDiv = contentEl.createDiv('file-info');
@@ -60,7 +61,7 @@ export class UploadModal extends Modal {
 
 		// Path setting
 		new Setting(contentEl)
-			.setName('Wiki.js Path')
+			.setName('Wiki.js path')
 			.setDesc('The path where this page will be created in Wiki.js')
 			.addText(text => text
 				.setValue(this.pathInput)
@@ -68,7 +69,7 @@ export class UploadModal extends Modal {
 
 		// Title setting
 		new Setting(contentEl)
-			.setName('Page Title')
+			.setName('Page title')
 			.setDesc('The title of the page in Wiki.js')
 			.addText(text => text
 				.setValue(this.titleInput)
@@ -114,7 +115,7 @@ export class UploadModal extends Modal {
 		let targetFolderId = 0;
 		try {
 			targetFolderId = await this.api.ensureAssetFolderPath(this.pathInput.trim());
-			console.log(`Asset folder prepared, folderId: ${targetFolderId}`);
+			console.debug(`Asset folder prepared, folderId: ${targetFolderId}`);
 		} catch (error) {
 			console.warn('Failed to create asset folder structure:', error);
 			// 继续执行，使用根目录
@@ -126,20 +127,20 @@ export class UploadModal extends Modal {
 		
 		for (const image of images) {
 			try {
-				console.log('Processing image:', image.name, 'Original path:', image.path);
+				console.debug('Processing image:', image.name, 'Original path:', image.path);
 				
 				const file = imageFileMap.get(image.path);
 				
 				if (file instanceof TFile) {
-					console.log('Found file:', file.path, 'File name:', file.name);
+					console.debug('Found file:', file.path, 'File name:', file.name);
 					const arrayBuffer = await this.app.vault.readBinary(file);
 					
 					// 上传图片到 Wiki.js，使用实际文件的完整文件名（包含扩展名）
-					const uploadedFileName = await this.api.uploadAsset(file.name, arrayBuffer, targetFolderId);
+					await this.api.uploadAsset(file.name, arrayBuffer, targetFolderId);
 					
 					// 上传成功，显示提示
 					new Notice(`✅ ${file.name} uploaded successfully`);
-					console.log(`✅ Successfully uploaded: ${file.name}`);
+					console.debug(`✅ Successfully uploaded: ${file.name}`);
 				} else {
 					console.error(`File not found: ${image.name} (path: ${image.path})`);
 					new Notice(`Image file not found: ${image.name}`);
@@ -181,22 +182,22 @@ export class UploadModal extends Modal {
 		uploadButton.textContent = 'Uploading...';
 		uploadButton.disabled = true;
 
-	try {
+		try {
 		// Check if page already exists before uploading images
-		const existingPage = await this.checkIfPageExists();
-		console.log('Existing page:', existingPage);
-		if (existingPage) {
-			const shouldUpdate = await this.confirmUpdate(existingPage);
-			if (!shouldUpdate) {
-				uploadButton.textContent = 'Upload';
-				uploadButton.disabled = false;
-				return;
-			}
+			const existingPage = await this.checkIfPageExists();
+		console.debug('Existing page:', existingPage);
+			if (existingPage) {
+				const shouldUpdate = await this.confirmUpdate(existingPage);
+				if (!shouldUpdate) {
+					uploadButton.textContent = 'Upload';
+					uploadButton.disabled = false;
+					return;
+				}
 		}
 
 		// 使用用户最终确认的路径重新处理 markdown 内容
 		// 这样可以确保图片路径使用正确的 Wiki.js 路径
-		console.log('Processing markdown with final path:', this.pathInput.trim());
+		console.debug('Processing markdown with final path:', this.pathInput.trim());
 		const finalProcessed = this.processor.processMarkdown(this.content, this.file.name, this.pathInput.trim());
 		const processedContent = finalProcessed.content;
 
@@ -209,23 +210,30 @@ export class UploadModal extends Modal {
 		
 		let result;
 		if (existingPage) {
-			result = await this.api.updatePage(
-				parseInt(existingPage.id),
-				this.pathInput.trim(),
-				this.titleInput.trim(),
-				processedContent,
-				this.descriptionInput.trim() || undefined,
-				this.parseTags()
-			);
-		} else {
-			result = await this.api.createPage(
-				this.pathInput.trim(),
-				this.titleInput.trim(),
-				processedContent,
-				this.descriptionInput.trim() || undefined,
-				this.parseTags()
-			);
-		}
+				const pageId = Number(existingPage.id);
+				if (isNaN(pageId)) {
+					new Notice(`Invalid page ID: ${existingPage.id}`);
+					uploadButton.textContent = 'Upload';
+					uploadButton.disabled = false;
+					return;
+				}
+				result = await this.api.updatePage(
+					pageId,
+					this.pathInput.trim(),
+					this.titleInput.trim(),
+					processedContent,
+					this.descriptionInput.trim() || undefined,
+					this.parseTags()
+				);
+			} else {
+				result = await this.api.createPage(
+					this.pathInput.trim(),
+					this.titleInput.trim(),
+					processedContent,
+					this.descriptionInput.trim() || undefined,
+					this.parseTags()
+				);
+			}
 
 			if (result.success) {
 				new Notice(`Successfully ${existingPage ? 'updated' : 'created'} page: ${result.pageUrl}`);
@@ -242,22 +250,21 @@ export class UploadModal extends Modal {
 		}
 	}
 
-	private async checkIfPageExists(): Promise<any> {
+	private async checkIfPageExists(): Promise<WikiJSPage | null> {
 		try {
-			console.log('Checking if page exists at path:', this.pathInput.trim());
+			console.debug('Checking if page exists at path:', this.pathInput.trim());
 			const page = await this.api.getPageByPath(this.pathInput.trim());
 			return page; // 如果页面不存在，getPageByPath 会返回 null
-			// return await this.api.getPageByPath(this.pathInput.trim());
-		} catch (error) {
+		} catch {
 			// Page doesn't exist
 			return null;
 		}
 	}
 
-	private async confirmUpdate(existingPage: any): Promise<boolean> {
+	private async confirmUpdate(existingPage: WikiJSPage): Promise<boolean> {
 		return new Promise((resolve) => {
 			const modal = new Modal(this.app);
-			modal.titleEl.setText('Page Already Exists');
+			modal.titleEl.setText('Page already exists');
 			
 			const content = modal.contentEl;
 			content.createEl('p', { 
@@ -278,7 +285,7 @@ export class UploadModal extends Modal {
 			};
 
 			const updateButton = buttonDiv.createEl('button', { 
-				text: 'Update Existing',
+				text: 'Update existing',
 				cls: 'mod-warning'
 			});
 			updateButton.onclick = () => {

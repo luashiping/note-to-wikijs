@@ -1,4 +1,4 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, Menu } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile } from 'obsidian';
 import { WikiJSSettings } from './src/types';
 import { WikiJSSettingTab, DEFAULT_SETTINGS } from './src/settings';
 import { UploadModal } from './src/upload-modal';
@@ -13,29 +13,29 @@ export default class NoteToWikiJSPlugin extends Plugin {
 
 		// Add ribbon icon
 		const ribbonIconEl = this.addRibbonIcon('upload', 'Upload current note to Wiki.js', (evt: MouseEvent) => {
-			this.uploadCurrentNote();
+			void this.uploadCurrentNote();
 		});
 		ribbonIconEl.addClass('wikijs-ribbon-icon');
 
 		// Add command to upload current note
 		this.addCommand({
 			id: 'upload-current-note',
-			name: 'Upload current note to Wiki.js',
+			name: 'Upload current note',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				this.uploadCurrentNote();
+				void this.uploadCurrentNote();
 			}
 		});
 
 		// Add command to upload specific file
 		this.addCommand({
 			id: 'upload-file-to-wikijs',
-			name: 'Upload file to Wiki.js',
+			name: 'Upload file',
 			callback: () => {
 				this.selectAndUploadFile();
 			}
 		});
 
-	// Add command to bulk upload files
+		// Add command to bulk upload files
 	// TODO: Re-enable after adding image upload support for bulk upload
 	// this.addCommand({
 	// 	id: 'bulk-upload-to-wikijs',
@@ -54,7 +54,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 							.setTitle('Upload to Wiki.js')
 							.setIcon('upload')
 							.onClick(async () => {
-								this.uploadFile(file);
+								await this.uploadFile(file);
 							});
 					});
 				}
@@ -69,11 +69,11 @@ export default class NoteToWikiJSPlugin extends Plugin {
 		statusBarItemEl.setText('Wiki.js Ready');
 		statusBarItemEl.addClass('wikijs-status-bar');
 
-		console.log('Note to Wiki.js plugin loaded');
+		console.debug('Note to Wiki.js plugin loaded');
 	}
 
 	onunload() {
-		console.log('Note to Wiki.js plugin unloaded');
+		console.debug('Note to Wiki.js plugin unloaded');
 	}
 
 	async loadSettings() {
@@ -125,7 +125,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 		modal.open();
 	}
 
-	private async selectAndUploadFile() {
+	private selectAndUploadFile() {
 		const files = this.app.vault.getMarkdownFiles();
 		
 		if (files.length === 0) {
@@ -135,7 +135,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 
 		// Create file selection modal
 		const modal = new FileSelectionModal(this.app, files, (file) => {
-			this.uploadFile(file);
+			void this.uploadFile(file);
 		});
 		modal.open();
 	}
@@ -187,13 +187,12 @@ class FileSelectionModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: 'Select File to Upload' });
+		contentEl.createEl('h2', { text: 'Select file to upload' });
 
 		const fileList = contentEl.createDiv('file-list');
 		
 		this.files.forEach(file => {
 			const fileItem = fileList.createDiv('file-item');
-			fileItem.style.cssText = 'padding: 8px; border: 1px solid var(--background-modifier-border); margin: 4px 0; cursor: pointer; border-radius: 4px;';
 			
 			fileItem.createEl('div', { text: file.name, cls: 'file-name' });
 			fileItem.createEl('div', { text: file.path, cls: 'file-path setting-item-description' });
@@ -201,14 +200,6 @@ class FileSelectionModal extends Modal {
 			fileItem.onclick = () => {
 				this.close();
 				this.onFileSelect(file);
-			};
-
-			fileItem.onmouseenter = () => {
-				fileItem.style.backgroundColor = 'var(--background-modifier-hover)';
-			};
-
-			fileItem.onmouseleave = () => {
-				fileItem.style.backgroundColor = '';
 			};
 		});
 	}
@@ -235,27 +226,18 @@ class FolderSelectionModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: 'Select Folder to Upload' });
+		contentEl.createEl('h2', { text: 'Select folder to upload' });
 
 		const folderList = contentEl.createDiv('folder-list');
 		
 		this.folders.forEach(folder => {
 			const folderItem = folderList.createDiv('folder-item');
-			folderItem.style.cssText = 'padding: 8px; border: 1px solid var(--background-modifier-border); margin: 4px 0; cursor: pointer; border-radius: 4px;';
 			
 			folderItem.createEl('div', { text: folder || '(Root)', cls: 'folder-name' });
 			
 			folderItem.onclick = () => {
 				this.close();
 				this.onFolderSelect(folder);
-			};
-
-			folderItem.onmouseenter = () => {
-				folderItem.style.backgroundColor = 'var(--background-modifier-hover)';
-			};
-
-			folderItem.onmouseleave = () => {
-				folderItem.style.backgroundColor = '';
 			};
 		});
 	}
@@ -289,19 +271,16 @@ class BulkUploadModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: `Bulk Upload (${this.files.length} files)` });
+		contentEl.createEl('h2', { text: `Bulk upload (${this.files.length} files)` });
 
 		// File list
 		const fileListDiv = contentEl.createDiv('bulk-upload-list');
-		fileListDiv.style.cssText = 'max-height: 300px; overflow-y: auto; margin: 10px 0;';
 
 		this.files.forEach(file => {
 			const fileItem = fileListDiv.createDiv('bulk-upload-item');
-			fileItem.style.cssText = 'padding: 8px; border: 1px solid var(--background-modifier-border); margin: 4px 0; border-radius: 4px;';
 			
-			const fileName = fileItem.createEl('span', { text: file.name });
+			fileItem.createEl('span', { text: file.name });
 			const status = fileItem.createEl('span', { cls: 'upload-status' });
-			status.style.cssText = 'float: right; font-size: 0.8em;';
 			
 			this.updateFileStatus(file.path, status);
 		});
@@ -309,10 +288,8 @@ class BulkUploadModal extends Modal {
 		// Progress bar
 		const progressDiv = contentEl.createDiv('progress-container');
 		const progressBar = progressDiv.createEl('div', { cls: 'progress-bar' });
-		progressBar.style.cssText = 'width: 100%; height: 20px; background: var(--background-secondary); border-radius: 10px; margin: 10px 0;';
 		
 		const progressFill = progressBar.createEl('div', { cls: 'progress-fill' });
-		progressFill.style.cssText = 'height: 100%; background: var(--color-accent); border-radius: 10px; width: 0%; transition: width 0.3s;';
 
 		// Buttons
 		const buttonDiv = contentEl.createDiv('modal-button-container');
@@ -321,7 +298,7 @@ class BulkUploadModal extends Modal {
 		cancelButton.onclick = () => this.close();
 
 		const uploadButton = buttonDiv.createEl('button', { 
-			text: 'Start Upload',
+			text: 'Start upload',
 			cls: 'mod-cta'
 		});
 		uploadButton.onclick = () => this.startBulkUpload(progressFill, uploadButton);
@@ -331,22 +308,25 @@ class BulkUploadModal extends Modal {
 		const status = this.uploadProgress[filePath];
 		const result = this.uploadResults[filePath];
 		
+		// Remove all status classes
+		statusElement.removeClass('pending', 'uploading', 'success', 'error');
+		
 		switch (status) {
 			case 'pending':
 				statusElement.textContent = '⏳ Pending';
-				statusElement.style.color = 'var(--text-muted)';
+				statusElement.addClass('pending');
 				break;
 			case 'uploading':
 				statusElement.textContent = '🔄 Uploading...';
-				statusElement.style.color = 'var(--color-accent)';
+				statusElement.addClass('uploading');
 				break;
 			case 'success':
 				statusElement.textContent = '✅ Success';
-				statusElement.style.color = 'var(--color-green)';
+				statusElement.addClass('success');
 				break;
 			case 'error':
 				statusElement.textContent = '❌ Error';
-				statusElement.style.color = 'var(--color-red)';
+				statusElement.addClass('error');
 				if (result) {
 					statusElement.title = result;
 				}
@@ -384,8 +364,12 @@ class BulkUploadModal extends Modal {
 
 				let result;
 				if (existingPage) {
+					const pageId = Number(existingPage.id);
+					if (isNaN(pageId)) {
+						throw new Error(`Invalid page ID: ${existingPage.id}`);
+					}
 					result = await api.updatePage(
-						existingPage.id,
+						pageId,
 						path,
 						processed.title,
 						processed.content,

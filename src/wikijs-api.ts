@@ -1,4 +1,5 @@
-import { WikiJSSettings, WikiJSCreatePageMutation, WikiJSUpdatePageMutation, WikiJSPageListResponse, UploadResult } from './types';
+import { requestUrl } from 'obsidian';
+import { WikiJSSettings, WikiJSCreatePageMutation, WikiJSUpdatePageMutation, WikiJSPageListResponse, UploadResult, WikiJSPage } from './types';
 
 export class WikiJSAPI {
 	private settings: WikiJSSettings;
@@ -7,14 +8,14 @@ export class WikiJSAPI {
 		this.settings = settings;
 	}
 
-	private async makeGraphQLRequest(query: string, variables?: any): Promise<any> {
-		const response = await fetch(`${this.settings.wikiUrl}/graphql`, {
+	private async makeGraphQLRequest(query: string, variables?: Record<string, unknown>): Promise<unknown> {
+		const response = await requestUrl({
+			url: `${this.settings.wikiUrl}/graphql`,
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				'Authorization': `Bearer ${this.settings.apiToken}`
 			},
-			// mode: 'cors',
 			body: JSON.stringify([{
 				operationName: null,
 				query,
@@ -23,15 +24,18 @@ export class WikiJSAPI {
 			}]),
 		});
 
-		const results = await response.json();
+		const results = response.json;
 		const result = Array.isArray(results) ? results[0] : results;
 
-		if (!response.ok) {
+		if (response.status >= 400) {
 			throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(result)}`);
 		}
 		
 		if (result.errors) {
-			throw new Error(`GraphQL error: ${result.errors.map((e: any) => e.message).join(', ')}`);
+			interface GraphQLError {
+				message: string;
+			}
+			throw new Error(`GraphQL error: ${result.errors.map((e: GraphQLError) => e.message).join(', ')}`);
 		}
 
 		return result.data;
@@ -70,10 +74,10 @@ export class WikiJSAPI {
 				}
 			}
 		`;
-		return await this.makeGraphQLRequest(query);
+		return await this.makeGraphQLRequest(query) as WikiJSPageListResponse;
 	}
 
-	async getPageByPath(path: string): Promise<any> {
+	async getPageByPath(path: string): Promise<WikiJSPage | null> {
 		// 去掉路径最前面的 /
 		const normalizedPath = path.startsWith('/') ? path.substring(1) : path;
 		
@@ -92,11 +96,17 @@ export class WikiJSAPI {
 				}
 			}
 		`;
-		const result = await this.makeGraphQLRequest(query, { path: normalizedPath });
+		const result = await this.makeGraphQLRequest(query, { path: normalizedPath }) as {
+			pages: {
+				search: {
+					results: WikiJSPage[];
+				};
+			};
+		};
 		// return result.pages.single;
 		// 在搜索结果中查找完全匹配的 path
 		const exactMatch = result.pages.search.results.find(
-			(page: any) => page.path === normalizedPath
+			(page) => page.path === normalizedPath
 		);
 
 		return exactMatch || null;
@@ -165,7 +175,7 @@ export class WikiJSAPI {
 				title
 			};
 
-			const result: WikiJSCreatePageMutation = await this.makeGraphQLRequest(mutation, variables);
+			const result = await this.makeGraphQLRequest(mutation, variables) as WikiJSCreatePageMutation;
 			
 			if (result.pages.create.responseResult.succeeded) {
 				return {
@@ -243,7 +253,7 @@ export class WikiJSAPI {
 				tags: tags || this.settings.defaultTags || []
 			};
 
-			const result: WikiJSUpdatePageMutation = await this.makeGraphQLRequest(mutation, variables);
+			const result = await this.makeGraphQLRequest(mutation, variables) as WikiJSUpdatePageMutation;
 			
 			if (result.pages.update.responseResult.succeeded) {
 				return {
@@ -271,7 +281,7 @@ export class WikiJSAPI {
 	 * @param parentFolderId 父文件夹 ID（0 表示根目录）
 	 * @returns 文件夹列表
 	 */
-	async getAssetFolders(parentFolderId: number = 0): Promise<any[]> {
+	async getAssetFolders(parentFolderId: number = 0): Promise<Array<{ id: number; slug: string; name: string }>> {
 		const query = `
 			query ($parentFolderId: Int!) {
 				assets {
@@ -285,7 +295,11 @@ export class WikiJSAPI {
 		`;
 
 		try {
-			const result = await this.makeGraphQLRequest(query, { parentFolderId });
+			const result = await this.makeGraphQLRequest(query, { parentFolderId }) as {
+				assets: {
+					folders: Array<{ id: number; slug: string; name: string }>;
+				};
+			};
 			return result.assets.folders || [];
 		} catch (error) {
 			console.error('Get folders error:', error);
@@ -328,10 +342,21 @@ export class WikiJSAPI {
 		`;
 
 		try {
-			const result = await this.makeGraphQLRequest(mutation, { parentFolderId, slug });
+			const result = await this.makeGraphQLRequest(mutation, { parentFolderId, slug }) as {
+				assets: {
+					createFolder: {
+						responseResult: {
+							succeeded: boolean;
+							errorCode: number;
+							slug: string;
+							message: string;
+						};
+					};
+				};
+			};
 			
 			if (result.assets.createFolder.responseResult.succeeded) {
-				console.log(`Asset folder created: ${slug}`);
+				console.debug(`Asset folder created: ${slug}`);
 				
 				// 创建成功后，查询获取新文件夹的 ID
 				const folderId = await this.findFolderIdByName(parentFolderId, slug);
@@ -347,10 +372,11 @@ export class WikiJSAPI {
 				};
 			}
 		} catch (error) {
-			console.error('Create folder error:', error);
+			const err = error as Error;
+			console.error('Create folder error:', err);
 			return {
 				succeeded: false,
-				message: error.message
+				message: err.message
 			};
 		}
 	}
@@ -376,20 +402,20 @@ export class WikiJSAPI {
 			
 			if (folderId) {
 				// 文件夹已存在，使用现有 ID
-				console.log(`Folder already exists: ${folderName} (ID: ${folderId})`);
+				console.debug(`Folder already exists: ${folderName} (ID: ${folderId})`);
 				currentFolderId = folderId;
 			} else {
 				// 文件夹不存在，创建新文件夹
 				const result = await this.createAssetFolder(currentFolderId, folderName);
 				
 				if (result.succeeded && result.folderId) {
-					console.log(`Created folder: ${folderName} (ID: ${result.folderId})`);
+					console.debug(`Created folder: ${folderName} (ID: ${result.folderId})`);
 					currentFolderId = result.folderId;
 				} else {
 					// 创建失败，可能是并发问题，再次尝试查询
 					folderId = await this.findFolderIdByName(currentFolderId, folderName);
 					if (folderId) {
-						console.log(`Folder found after retry: ${folderName} (ID: ${folderId})`);
+						console.debug(`Folder found after retry: ${folderName} (ID: ${folderId})`);
 						currentFolderId = folderId;
 					} else {
 						console.error(`Failed to create or find folder: ${folderName}`);
@@ -447,38 +473,39 @@ export class WikiJSAPI {
 			const blob = new Blob([fileContent], { type: contentType });
 			formData.append('mediaUpload', blob, sanitizedFileName);
 
-			console.log(`Uploading asset: ${sanitizedFileName} to folder ${folderId}`);
-			console.log(`  - Size: ${blob.size} bytes`);
-			console.log(`  - MIME type: ${blob.type}`);
-			console.log(`  - File extension: ${sanitizedFileName.split('.').pop()}`);
+		console.debug(`Uploading asset: ${sanitizedFileName} to folder ${folderId}`);
+		console.debug(`  - Size: ${blob.size} bytes`);
+		console.debug(`  - MIME type: ${blob.type}`);
+		console.debug(`  - File extension: ${sanitizedFileName.split('.').pop()}`);
 
-			// 发送请求
-			const response = await fetch(`${this.settings.wikiUrl}/u`, {
-				method: 'POST',
-				headers: {
-					'Accept': '*/*',
-					'Authorization': `Bearer ${this.settings.apiToken}`,
-					// 注意：不要设置 Content-Type，让浏览器自动设置正确的 boundary
-				},
-				body: formData
-			});
+		// 发送请求 - 使用原生 fetch API，因为 requestUrl 不支持 FormData
+		// 在 Electron/Obsidian 环境中，fetch API 是可用的
+		const response = await fetch(`${this.settings.wikiUrl}/u`, {
+			method: 'POST',
+			headers: {
+				'Accept': '*/*',
+				'Authorization': `Bearer ${this.settings.apiToken}`,
+				// 注意：不要设置 Content-Type，让浏览器自动设置正确的 boundary
+			},
+			body: formData
+		});
 
-			
-			if (!response.ok) {
-				const errorText = await response.text();
-				console.error(`Upload failed: ${response.status} - ${errorText}`);
-				throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-			}
+		
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error(`Upload failed: ${response.status} - ${errorText}`);
+			throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+		}
 
 		// const result = await response.json();
 		// console.log('Upload response:', result);
-		
+			
 		// if (!result.succeeded) {
 		// 	throw new Error(result.message || 'Upload failed');
 		// }
 
 		// 图片上传成功，输出文件名
-		console.log(`✅ Asset uploaded successfully: ${sanitizedFileName}`);
+		console.debug(`✅ Asset uploaded successfully: ${sanitizedFileName}`);
 		
 		// 返回文件名（用于后续在 markdown 中替换引用）
 		return sanitizedFileName;

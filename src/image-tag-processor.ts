@@ -34,7 +34,7 @@ export class ImageTagProcessor {
 				return resourcePath;
 			}
 		} catch (error) {
-			console.log('metadataCache method failed:', error);
+			console.debug('metadataCache method failed:', error);
 		}
 
 		// 方法2: 尝试直接路径查找（绝对路径）

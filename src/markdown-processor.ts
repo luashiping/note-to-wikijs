@@ -20,12 +20,12 @@ export class MarkdownProcessor {
 		const images = this.extractImages(content);
 		
 		// Debug log: Print extracted images
-		console.log('Extracted images:', JSON.stringify(images, null, 2));
+		console.debug('Extracted images:', JSON.stringify(images, null, 2));
 
 		if (!this.settings.preserveObsidianSyntax) {
 			// Convert Obsidian-specific syntax
 			processedContent = this.convertObsidianLinks(processedContent);
-			console.log('Processed pagePath:', pagePath);
+			console.debug('Processed pagePath:', pagePath);
 			processedContent = this.convertObsidianImages(processedContent, pagePath);
 			processedContent = this.convertObsidianTags(processedContent);
 			processedContent = this.convertObsidianCallouts(processedContent);
@@ -86,20 +86,20 @@ export class MarkdownProcessor {
 		// 2. 将大写字母转换为小写字母
 		fileName = fileName.toLowerCase();
 			
-		// 构建图片在 Wiki.js 中的路径
+			// 构建图片在 Wiki.js 中的路径
 		// 如果提供了页面路径，则将图片放在相同的完整路径下
-		let imageUrl = '';
-		if (pagePath) {
-			// 去除前导斜杠
-			let cleanPath = pagePath.startsWith('/') ? pagePath.substring(1) : pagePath;
-			
+			let imageUrl = '';
+			if (pagePath) {
+				// 去除前导斜杠
+				let cleanPath = pagePath.startsWith('/') ? pagePath.substring(1) : pagePath;
+				
 			// 保留完整路径，包括页面名称
 			// 例如：notes/coco/my-page -> /_assets/notes/coco/my-page/image.png
-			imageUrl = cleanPath ? `/${cleanPath}/${fileName}` : `/${fileName}`;
-		} else {
-			// 如果没有页面路径，放在根目录
-			imageUrl = `/${fileName}`;
-		}
+				imageUrl = cleanPath ? `/${cleanPath}/${fileName}` : `/${fileName}`;
+			} else {
+				// 如果没有页面路径，放在根目录
+				imageUrl = `/${fileName}`;
+			}
 
 			// 使用显示文本（如果有）或完整文件名作为 alt text
 			const altText = displayText || fileName;

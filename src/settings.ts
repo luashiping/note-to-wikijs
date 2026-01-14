@@ -24,7 +24,9 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', { text: 'Wiki.js Settings' });
+		new Setting(containerEl)
+			.setName('Wiki.js settings')
+			.setHeading();
 
 		new Setting(containerEl)
 			.setName('Wiki.js URL')
@@ -38,7 +40,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('API Token')
+			.setName('API token')
 			.setDesc('Your Wiki.js API token (can be generated in Wiki.js Admin > API Access)')
 			.addText(text => text
 				.setPlaceholder('Enter your API token')
@@ -50,10 +52,10 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		// Connection test button
 		new Setting(containerEl)
-			.setName('Test Connection')
+			.setName('Test connection')
 			.setDesc('Test the connection to your Wiki.js instance')
 			.addButton(button => button
-				.setButtonText('Test Connection')
+				.setButtonText('Test connection')
 				.setCta()
 				.onClick(async () => {
 					button.setButtonText('Testing...');
@@ -61,7 +63,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 					
 					try {
 						if (!this.plugin.settings.wikiUrl || !this.plugin.settings.apiToken) {
-							throw new Error('Please fill in both Wiki.js URL and API Token');
+							throw new Error('Please fill in both Wiki.js URL and API token');
 						}
 
 						const api = new WikiJSAPI(this.plugin.settings);
@@ -80,13 +82,13 @@ export class WikiJSSettingTab extends PluginSettingTab {
 					}
 					
 					setTimeout(() => {
-						button.setButtonText('Test Connection');
+						button.setButtonText('Test connection');
 						button.setDisabled(false);
 					}, 3000);
 				}));
 
 		new Setting(containerEl)
-			.setName('Default Tags')
+			.setName('Default tags')
 			.setDesc('Default tags to add to uploaded pages (comma-separated)')
 			.addText(text => text
 				.setPlaceholder('tag1, tag2, tag3')
@@ -100,7 +102,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Auto Convert Links')
+			.setName('Auto convert links')
 			.setDesc('Automatically convert relative links to absolute Wiki.js paths')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autoConvertLinks)
@@ -110,7 +112,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('Preserve Obsidian Syntax')
+			.setName('Preserve Obsidian syntax')
 			.setDesc('Keep Obsidian-specific syntax (like [[links]] and callouts) unchanged')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.preserveObsidianSyntax)
@@ -120,10 +122,12 @@ export class WikiJSSettingTab extends PluginSettingTab {
 				}));
 
 		// Advanced settings section
-		containerEl.createEl('h3', { text: 'Advanced Settings' });
+		new Setting(containerEl)
+			.setName('Advanced settings')
+			.setHeading();
 
 		new Setting(containerEl)
-			.setName('Upload Behavior')
+			.setName('Upload behavior')
 			.setDesc('Choose what happens when uploading a note that already exists in Wiki.js')
 			.addDropdown(dropdown => dropdown
 				.addOption('ask', 'Ask each time')
@@ -136,16 +140,20 @@ export class WikiJSSettingTab extends PluginSettingTab {
 				}));
 
 		// Usage instructions
-		containerEl.createEl('h3', { text: 'Usage' });
+		new Setting(containerEl)
+			.setName('Usage')
+			.setHeading();
+		
 		const usageDiv = containerEl.createDiv();
-		usageDiv.innerHTML = `
-			<p>To upload a note to Wiki.js:</p>
-			<ol>
-				<li>Open the note you want to upload</li>
-				<li>Use the command palette (Ctrl/Cmd + P) and search for "Upload to Wiki.js"</li>
-				<li>Or right-click on a file in the file explorer and select "Upload to Wiki.js"</li>
-			</ol>
-			<p><strong>Note:</strong> The plugin will automatically convert Obsidian-specific syntax to be compatible with Wiki.js unless you enable "Preserve Obsidian Syntax".</p>
-		`;
+		usageDiv.createEl('p', { text: 'To upload a note to Wiki.js:' });
+		
+		const ol = usageDiv.createEl('ol');
+		ol.createEl('li', { text: 'Open the note you want to upload' });
+		ol.createEl('li', { text: 'Use the command palette (Ctrl/Cmd + P) and search for "Upload to Wiki.js"' });
+		ol.createEl('li', { text: 'Or right-click on a file in the file explorer and select "Upload to Wiki.js"' });
+		
+		const noteP = usageDiv.createEl('p');
+		noteP.createEl('strong', { text: 'Note: ' });
+		noteP.appendText('The plugin will automatically convert Obsidian-specific syntax to be compatible with Wiki.js unless you enable "Preserve Obsidian syntax".');
 	}
 }

@@ -15,6 +15,13 @@ export interface WikiJSPageResponse {
 	updatedAt: string;
 }
 
+export interface WikiJSPage {
+	id: string;
+	path: string;
+	title: string;
+	description?: string;
+}
+
 export interface WikiJSCreatePageMutation {
 	pages: {
 		create: {
