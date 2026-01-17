@@ -12,7 +12,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 		await this.loadSettings();
 
 		// Add ribbon icon
-		const ribbonIconEl = this.addRibbonIcon('upload', 'Upload current note to Wiki.js', (evt: MouseEvent) => {
+		const ribbonIconEl = this.addRibbonIcon('upload', 'Upload current note to wiki.js', (evt: MouseEvent) => {
 			void this.uploadCurrentNote();
 		});
 		ribbonIconEl.addClass('wikijs-ribbon-icon');
@@ -51,7 +51,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 				if (file instanceof TFile && file.extension === 'md') {
 					menu.addItem((item) => {
 						item
-							.setTitle('Upload to Wiki.js')
+							.setTitle('Upload to wiki.js')
 							.setIcon('upload')
 							.onClick(async () => {
 								await this.uploadFile(file);
@@ -66,7 +66,7 @@ export default class NoteToWikiJSPlugin extends Plugin {
 
 		// Add status bar item
 		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Wiki.js Ready');
+		statusBarItemEl.setText('Wiki.js ready');
 		statusBarItemEl.addClass('wikijs-status-bar');
 
 		console.debug('Note to Wiki.js plugin loaded');
@@ -313,19 +313,19 @@ class BulkUploadModal extends Modal {
 		
 		switch (status) {
 			case 'pending':
-				statusElement.textContent = '⏳ Pending';
+				statusElement.textContent = '⏳ pending';
 				statusElement.addClass('pending');
 				break;
 			case 'uploading':
-				statusElement.textContent = '🔄 Uploading...';
+				statusElement.textContent = '🔄 uploading...';
 				statusElement.addClass('uploading');
 				break;
 			case 'success':
-				statusElement.textContent = '✅ Success';
+				statusElement.textContent = '✅ success';
 				statusElement.addClass('success');
 				break;
 			case 'error':
-				statusElement.textContent = '❌ Error';
+				statusElement.textContent = '❌ error';
 				statusElement.addClass('error');
 				if (result) {
 					statusElement.title = result;

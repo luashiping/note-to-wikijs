@@ -40,7 +40,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('API token')
-			.setDesc('Your Wiki.js API token (can be generated in Wiki.js Admin > API Access)')
+			.setDesc('Your wiki.js api token (can be generated in wiki.js admin > api access)')
 			.addText(text => text
 				.setPlaceholder('Enter your API token')
 				.setValue(this.plugin.settings.apiToken)
@@ -52,7 +52,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 		// Connection test button
 		new Setting(containerEl)
 			.setName('Test connection')
-			.setDesc('Test the connection to your Wiki.js instance')
+			.setDesc('Test the connection to your wiki.js instance')
 			.addButton(button => button
 				.setButtonText('Test connection')
 				.setCta()
@@ -69,14 +69,14 @@ export class WikiJSSettingTab extends PluginSettingTab {
 						const isConnected = await api.checkConnection();
 						
 						if (isConnected) {
-							button.setButtonText('✅ Connected');
+							button.setButtonText('✅ connected');
 							this.plugin.showNotice('Successfully connected to Wiki.js!', 3000);
 						} else {
-							button.setButtonText('❌ Failed');
+							button.setButtonText('❌ failed');
 							this.plugin.showNotice('Failed to connect to Wiki.js. Please check your settings.', 5000);
 						}
 					} catch (error) {
-						button.setButtonText('❌ Error');
+						button.setButtonText('❌ error');
 						this.plugin.showNotice(`Connection error: ${error.message}`, 5000);
 					}
 					
@@ -88,7 +88,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Auto convert links')
-			.setDesc('Automatically convert relative links to absolute Wiki.js paths')
+			.setDesc('Automatically convert relative links to absolute wiki.js paths')
 			.addToggle(toggle => toggle
 				.setValue(this.plugin.settings.autoConvertLinks)
 				.onChange(async (value) => {
@@ -113,7 +113,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Upload behavior')
-			.setDesc('Choose what happens when uploading a note that already exists in Wiki.js')
+			.setDesc('Choose what happens when uploading a note that already exists in wiki.js')
 			.addDropdown(dropdown => dropdown
 				.addOption('ask', 'Ask each time')
 				.addOption('update', 'Always update existing page')
@@ -130,12 +130,12 @@ export class WikiJSSettingTab extends PluginSettingTab {
 			.setHeading();
 		
 		const usageDiv = containerEl.createDiv();
-		usageDiv.createEl('p', { text: 'To upload a note to Wiki.js:' });
+		usageDiv.createEl('p', { text: 'To upload a note to wiki.js:' });
 		
 		const ol = usageDiv.createEl('ol');
 		ol.createEl('li', { text: 'Open the note you want to upload' });
 		ol.createEl('li', { text: 'Use the command palette (Ctrl/Cmd + P) and search for "Upload to Wiki.js"' });
-		ol.createEl('li', { text: 'Or right-click on a file in the file explorer and select "Upload to Wiki.js"' });
+		ol.createEl('li', { text: 'Or right-click on a file in the file explorer and select "Upload to wiki.js"' });
 		
 		const noteP = usageDiv.createEl('p');
 		noteP.createEl('strong', { text: 'Note: ' });

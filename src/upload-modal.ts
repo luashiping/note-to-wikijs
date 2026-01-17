@@ -52,7 +52,7 @@ export class UploadModal extends Modal {
 		const { contentEl } = this;
 		contentEl.empty();
 
-		contentEl.createEl('h2', { text: 'Upload to Wiki.js' });
+		contentEl.createEl('h2', { text: 'Upload to wiki.js' });
 
 		// File info
 		const fileInfoDiv = contentEl.createDiv('file-info');
@@ -62,7 +62,7 @@ export class UploadModal extends Modal {
 		// Path setting
 		new Setting(contentEl)
 			.setName('Wiki.js path')
-			.setDesc('The path where this page will be created in Wiki.js')
+			.setDesc('The path where this page will be created in wiki.js')
 			.addText(text => text
 				.setValue(this.pathInput)
 				.onChange(value => this.pathInput = value));
@@ -70,7 +70,7 @@ export class UploadModal extends Modal {
 		// Title setting
 		new Setting(contentEl)
 			.setName('Page title')
-			.setDesc('The title of the page in Wiki.js')
+			.setDesc('The title of the page in wiki.js')
 			.addText(text => text
 				.setValue(this.titleInput)
 				.onChange(value => this.titleInput = value));
