@@ -24,7 +24,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName('Wiki.js settings')
+			.setName('General')
 			.setHeading();
 
 		new Setting(containerEl)
@@ -108,7 +108,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		// Advanced settings section
 		new Setting(containerEl)
-			.setName('Advanced settings')
+			.setName('Advanced')
 			.setHeading();
 
 		new Setting(containerEl)
