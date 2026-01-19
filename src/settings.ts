@@ -23,9 +23,9 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		containerEl.empty();
 
-		new Setting(containerEl)
-			.setName('General')
-			.setHeading();
+		// new Setting(containerEl)
+		// 	.setName('General')
+		// 	.setHeading();
 
 		new Setting(containerEl)
 			.setName('Wiki.js URL')
