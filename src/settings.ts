@@ -40,7 +40,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('API token')
-			.setDesc('Your wiki.js api token (can be generated in wiki.js admin > api access)')
+			.setDesc('Your Wiki.js API token (can be generated in wiki.js admin > API Access)')
 			.addText(text => text
 				.setPlaceholder('Enter your API token')
 				.setValue(this.plugin.settings.apiToken)
@@ -134,7 +134,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 		
 		const ol = usageDiv.createEl('ol');
 		ol.createEl('li', { text: 'Open the note you want to upload' });
-		ol.createEl('li', { text: 'Use the command palette (Ctrl/Cmd + P) and search for "Upload to Wiki.js"' });
+		ol.createEl('li', { text: 'Use the command palette (Ctrl/Cmd + P) and search for "Upload current note"' });
 		ol.createEl('li', { text: 'Or right-click on a file in the file explorer and select "Upload to wiki.js"' });
 		
 		const noteP = usageDiv.createEl('p');
