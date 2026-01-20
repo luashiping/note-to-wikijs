@@ -89,7 +89,6 @@ export class UploadModal extends Modal {
 			.setDesc('Tags for the page (comma-separated)')
 			.addText(text => text
 				.setValue(this.tagsInput)
-				.setPlaceholder('tag1, tag2, tag3')
 				.onChange(value => this.tagsInput = value));
 
 		// Buttons
