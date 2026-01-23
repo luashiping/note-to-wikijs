@@ -19,6 +19,7 @@ export class UploadModal extends Modal {
 	private descriptionInput: string;
 	private content: string;
 	private images: Array<{ name: string; path: string }>;
+	private uploadButton: HTMLButtonElement;
 
 	constructor(app: App, plugin: NoteToWikiJSPlugin, file: TFile) {
 		super(app);
@@ -97,11 +98,11 @@ export class UploadModal extends Modal {
 		const cancelButton = buttonDiv.createEl('button', { text: 'Cancel' });
 		cancelButton.onclick = () => this.close();
 
-		const uploadButton = buttonDiv.createEl('button', { 
+		this.uploadButton = buttonDiv.createEl('button', { 
 			text: 'Upload',
 			cls: 'mod-cta'
 		});
-		uploadButton.onclick = () => this.performUpload();
+		this.uploadButton.onclick = () => this.performUpload();
 
 		// Style the modal
 		contentEl.addClass('wikijs-upload-modal');
@@ -177,9 +178,8 @@ export class UploadModal extends Modal {
 			return;
 		}
 
-		const uploadButton = this.contentEl.querySelector('.mod-cta') as HTMLButtonElement;
-		uploadButton.textContent = 'Uploading...';
-		uploadButton.disabled = true;
+		this.uploadButton.textContent = 'Uploading...';
+		this.uploadButton.disabled = true;
 
 		try {
 		// Check if page already exists before uploading images
@@ -188,8 +188,8 @@ export class UploadModal extends Modal {
 			if (existingPage) {
 				const shouldUpdate = await this.confirmUpdate(existingPage);
 				if (!shouldUpdate) {
-					uploadButton.textContent = 'Upload';
-					uploadButton.disabled = false;
+					this.uploadButton.textContent = 'Upload';
+					this.uploadButton.disabled = false;
 					return;
 				}
 		}
@@ -212,8 +212,8 @@ export class UploadModal extends Modal {
 				const pageId = Number(existingPage.id);
 				if (isNaN(pageId)) {
 					new Notice(`Invalid page ID: ${existingPage.id}`);
-					uploadButton.textContent = 'Upload';
-					uploadButton.disabled = false;
+					this.uploadButton.textContent = 'Upload';
+					this.uploadButton.disabled = false;
 					return;
 				}
 				result = await this.api.updatePage(
@@ -244,8 +244,8 @@ export class UploadModal extends Modal {
 		} catch (error) {
 			new Notice(`Error uploading page: ${error.message}`);
 		} finally {
-			uploadButton.textContent = 'Upload';
-			uploadButton.disabled = false;
+			this.uploadButton.textContent = 'Upload';
+			this.uploadButton.disabled = false;
 		}
 	}
 
