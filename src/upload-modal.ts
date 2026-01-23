@@ -30,7 +30,11 @@ export class UploadModal extends Modal {
 		this.imageProcessor = new ImageTagProcessor(app);
 		
 		// Initialize form fields
-		this.initializeFields();
+		this.initializeFields().catch((error) => {
+			console.error('Failed to initialize upload modal:', error);
+			new Notice(`Failed to read file: ${error.message}`);
+			this.close();
+		});
 	}
 
 	private async initializeFields() {
