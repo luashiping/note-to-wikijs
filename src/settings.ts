@@ -40,7 +40,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('API key')
-			.setDesc('Your wiki.js api token, which can be generated from the administration area (under api access).')
+			.setDesc('Your wiki.js api token.')
 			.addText(text => text
 				.setPlaceholder('Enter your API token')
 				.setValue(this.plugin.settings.apiToken)
