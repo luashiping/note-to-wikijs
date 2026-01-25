@@ -134,7 +134,7 @@ export class WikiJSSettingTab extends PluginSettingTab {
 		const ol = usageDiv.createEl('ol');
 		ol.createEl('li', { text: 'Open the note you want to upload' });
 		ol.createEl('li', { text: 'Use the command palette (Ctrl/Cmd + P) and search for "Upload current note"' });
-		ol.createEl('li', { text: 'Or right-click on a file in the file explorer and select "Upload to wiki.js"' });
+		ol.createEl('li', { text: 'Or right-click the file in the file explorer and select "Upload to wiki.js"' });
 		
 		const noteP = usageDiv.createEl('p');
 		noteP.createEl('strong', { text: 'Note: ' });
